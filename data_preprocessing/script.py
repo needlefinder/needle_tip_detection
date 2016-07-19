@@ -14,13 +14,13 @@ args = parser.parse_args()
 paths = []
 needPath = []
 cases = []
-spacing = [int(x) for x in args.s.split(',')]
+spacing = [float(x) for x in args.s.split(',')]
 def createDir(directory):
     if not os.path.exists(directory):
         os.makedirs(directory)
     return 0
 
-createDir(USERPATH + '/Projects/LabelMaps_%d-%d-%d/'%(spacing[0], spacing[1], spacing[2]))
+createDir(USERPATH + '/Projects/LabelMaps_%.2f-%.2f-%.2f/'%(spacing[0], spacing[1], spacing[2]))
 
 with open(USERPATH + '/Dropbox/GYN Cases/scenes.txt') as f:
     lines = f.readlines()
@@ -56,7 +56,7 @@ def labelMapFromNeedle(inputVolume, needleID, value, caseNumber, name):
     # slicer.mrmlScene.GetNodeByID("vtkMRMLSliceNodeYellow").SetUseLabelOutline(True)
     # slicer.mrmlScene.GetNodeByID("vtkMRMLSliceNodeRed").RotateToVolumePlane(outputLabelMap)
     # slicer.mrmlScene.GetNodeByID("vtkMRMLSliceNodeYellow").RotateToVolumePlane(outputLabelMap)
-    slicer.util.saveNode(outputLabelMap, USERPATH + '/Projects/LabelMaps_%d-%d-%d/%d/needle-%s.nrrd'%(spacing[0], spacing[1], spacing[2], caseNumber,name))
+    slicer.util.saveNode(outputLabelMap, USERPATH + '/Projects/LabelMaps_%.2f-%.2f-%.2f/%d/needle-%s.nrrd'%(spacing[0], spacing[1], spacing[2], caseNumber,name))
     # slicer.mrmlScene.RemoveAllObservers()
     slicer.mrmlScene.RemoveNodeReferences(outputLabelMap)
     slicer.mrmlScene.RemoveNode(outputLabelMap)
@@ -83,9 +83,9 @@ def get_resized_img(k, data_type = sitk.sitkFloat32):
         interp = sitk.sitkNearestNeighbor
     
     new_image = sitk.Resample(img, rimage, tx, interp, data_type)
-    dirPath = USERPATH + '/Projects/LabelMaps_%d-%d-%d/%d/'%(spacing[0], spacing[1], spacing[2], k)
+    dirPath = USERPATH + '/Projects/LabelMaps_%.2f-%.2f-%.2f/%d/'%(spacing[0], spacing[1], spacing[2], k)
     createDir(dirPath)
-    filename = USERPATH + '/Projects/LabelMaps_%d-%d-%d/%d/case.nrrd'%(spacing[0], spacing[1], spacing[2], k)
+    filename = USERPATH + '/Projects/LabelMaps_%.2f-%.2f-%.2f/%d/case.nrrd'%(spacing[0], spacing[1], spacing[2], k)
     sitk.WriteImage( new_image, filename )
     return filename
 
@@ -100,7 +100,7 @@ def extract(k):
     imgPath = get_resized_img(cases[k])
     slicer.util.loadVolume(imgPath)
     backgroundNode = slicer.app.layoutManager().sliceWidget("Red").sliceLogic().GetBackgroundLayer().GetVolumeNode()
-    slicer.util.saveNode(backgroundNode, USERPATH + '/Projects/LabelMaps_%d-%d-%d/%d/case.nrrd'%(spacing[0], spacing[1], spacing[2], cases[k]))
+    slicer.util.saveNode(backgroundNode, USERPATH + '/Projects/LabelMaps_%.2f-%.2f-%.2f/%d/case.nrrd'%(spacing[0], spacing[1], spacing[2], cases[k]))
     for i, ndl in enumerate(ndls):
         try:
             name = ndl.split('_')[-1].split('.')[0]
