@@ -1,7 +1,7 @@
 
 # coding: utf-8
 
-# In[1]:
+# In[220]:
 
 
 
@@ -69,7 +69,8 @@ seed = 7
 patchsize = [10,10,10]
 data_spacing = [1,1,1]
 notipsPath = USERPATH + "/preprocessed_data/notips_%d-%d-%d_%.2f-%.2f-%.2f/" %(tuple(patchsize)+tuple(data_spacing))
-tipsPath = USERPATH + "/preprocessed_data/needles_%d-%d-%d_%.2f-%.2f-%.2f/" %(tuple(patchsize)+tuple(data_spacing))
+tipsPath = USERPATH + "/preprocessed_data/tips_%d-%d-%d_%.2f-%.2f-%.2f/" %(tuple(patchsize)+tuple(data_spacing))
+needlesPath = USERPATH + "/preprocessed_data/needles_%d-%d-%d_%.2f-%.2f-%.2f/" %(tuple(patchsize)+tuple(data_spacing))
 
 casesToExclude = [64,77]
 
@@ -110,34 +111,42 @@ print(tipsPath)
 # notips = loadAllDataFromPath(notipsPath, casesToExclude)[:3*len(tips)]
 
 
-# In[2]:
+# In[227]:
 
+o = 12
 tips = loadAllDataFromPath(tipsPath, casesToExclude)
 notips = loadAllDataFromPath(notipsPath, casesToExclude)[:5*len(tips)]
+needles = loadAllDataFromPath(needlesPath, casesToExclude)[:4*len(tips)]
+
+nb_classes = 3
 
 print(len(tips), len(notips))
 
 target_0 = [0 for i in range(len(notips))]
 target_1 = [1 for i in range(len(tips))]
-y_train = np.array(target_0 + target_1)
+target_2 = [2 for i in range(len(needles))]
+y_train = np.array(target_0 + target_1 + target_2)
+y_train_1dim = y_train
+from keras.utils import np_utils
+y_train = np_utils.to_categorical(y_train, nb_classes)
 print('target shape:', y_train.shape)
-X_train = np.array(list(notips)+list(tips))
+X_train = np.array(list(notips)+list(tips)+ list(needles))
 
 print('data shape:', X_train.shape)
 
+f_Xtrain = open('X_data_n%d.save'%o, 'wb')
+f_ytrain = open('y_data_n%d.save'%o, 'wb')
 
-# In[3]:
+pickle.dump(X_train, f_Xtrain, protocol=pickle.HIGHEST_PROTOCOL)
+pickle.dump(y_train, f_ytrain, protocol=pickle.HIGHEST_PROTOCOL)
 
-o = 10
-# f_Xtrain = open('X_data_n%d.save'%o, 'wb')
-# f_ytrain = open('y_data_n%d.save'%o, 'wb')
+f_Xtrain.close()
+f_ytrain.close()
 
-# pickle.dump(X_train, f_Xtrain, protocol=pickle.HIGHEST_PROTOCOL)
-# pickle.dump(y_train, f_ytrain, protocol=pickle.HIGHEST_PROTOCOL)
 
-# f_Xtrain.close()
-# f_ytrain.close()
+# In[222]:
 
+o = 12
 
 # In[6]:
 
@@ -159,15 +168,20 @@ y_data= pickle.load(f_ydata)
 y_data_binary = to_categorical(y_data)
 
 # encode class values as integers
-encoder = LabelEncoder()
-encoder.fit(y_data)
-y_data = encoder.transform(y_data)
+# encoder = LabelEncoder()
+# encoder.fit(y_data)
+# y_data = encoder.transform(y_data)
 
 print("Data shape and label shape")
 print(X_data_.shape, y_data.shape)
 
 
-# In[4]:
+# In[ ]:
+
+
+
+
+# In[223]:
 
 # In[7]:
 
@@ -179,19 +193,20 @@ def shuffle_in_unison_inplace(a, b):
 
 # init the global var
 model = 0
-m = 13
-conv3d = False
+m = 14
+conv3d = True
 conv1d = False
 dimOrdering = 'tf'
 
 
-# In[30]:
+# In[255]:
 
+import sys
 oldstdout = sys.stdout
 sys.stdout = sys.__stdout__
 def create_baseline():
 
-    nb_classes = 1
+    nb_classes = 3
 
     # create model
     global model
@@ -231,7 +246,7 @@ def create_baseline():
         model.add(Convolution2D(10, 10, 10, border_mode='same', activation='relu', name='conv1_1'))
         model.add(Convolution2D(10, 10, 10, border_mode='same', activation='relu', name='conv1_2'))
         model.add(Convolution2D(10, 10, 10, border_mode='same', activation='relu', name='conv1_3'))
-        model.add(Convolution2D(10, 10, 10, border_mode='same', activation='relu'))
+#         model.add(Convolution2D(10, 10, 10, border_mode='same', activation='relu'))
 #         model.add(Convolution2D(10, 10, 10, border_mode='same', activation='relu'))
 #         model.add(Convolution2D(10, 10, 10, border_mode='same', activation='relu'))
 #         model.add(Convolution2D(10, 10, 10, border_mode='same', activation='relu'))
@@ -243,10 +258,30 @@ def create_baseline():
         model.add(Dropout(0.5))
         model.add(Dense(100, activation='relu'))
         model.add(Dropout(0.5))
-        model.add(Dense(nb_classes, activation='sigmoid'))
+        model.add(Dense(nb_classes, activation='softmax'))
+        
+    if m ==14:
+        model = Sequential()
+        model.add(Convolution3D(10, 10, 10, 10, border_mode='same', input_shape=(1,10,10,10), activation='relu', name='conv1_0'))
+        model.add(Convolution3D(5, 10, 10, 10, border_mode='same', activation='relu', name='conv1_1'))
+        model.add(Convolution3D(5, 10, 10, 10, border_mode='same', activation='relu', name='conv1_2'))
+        model.add(Convolution3D(5, 10, 10,10, border_mode='same', activation='relu', name='conv1_3'))
+#         model.add(Convolution3D(10, 10, 10, border_mode='same', activation='relu'))
+#         model.add(Convolution3D(10, 10, 10, border_mode='same', activation='relu'))
+#         model.add(Convolution2D(10, 10, 10, border_mode='same', activation='relu'))
+#         model.add(Convolution2D(10, 10, 10, border_mode='same', activation='relu'))
+        model.add(MaxPooling3D((2,2,2), border_mode='same'))
+        model.add(Dropout(0.5))
+
+        model.add(Flatten())
+        model.add(Dense(5000, activation='relu', name='dense_1'))
+        model.add(Dropout(0.5))
+        model.add(Dense(100, activation='relu', name='dense_2'))
+        model.add(Dropout(0.5))
+        model.add(Dense(nb_classes, activation='softmax', name='softmax'))
         
 
-    model.compile(loss='binary_crossentropy',
+    model.compile(loss='categorical_crossentropy',
                   optimizer='adam',
                   metrics=['accuracy'])
     
@@ -255,10 +290,10 @@ def create_baseline():
 # np.random.seed(seed)
 estimators = []
 # estimators.append(('standardize', StandardScaler()))
-estimators.append(('mlp', KerasClassifier(build_fn=create_baseline, nb_epoch=30,
-                                          batch_size=2000, verbose=1)))
+estimators.append(('mlp', KerasClassifier(build_fn=create_baseline, nb_epoch=50,
+                                          batch_size=1000, verbose=1)))
 pipeline = Pipeline(estimators)
-kfold = StratifiedKFold(y=y_data, n_folds=3, shuffle=True)#, random_state=seed)
+kfold = StratifiedKFold(y=y_train_1dim, n_folds=3, shuffle=True)#, random_state=seed)
 if not conv1d and dimOrdering == 'th':
     X_data = np.swapaxes(X_data_,1,3)
     X_data = np.swapaxes(X_data,2,3)
@@ -272,6 +307,7 @@ else:
 
 if conv3d:
     X_data =  np.expand_dims(X_data, 1)
+print(X_data.shape)
     
 print(X_data.shape)
 results = cross_val_score(pipeline,X_data, y_data, cv=kfold)
@@ -282,7 +318,7 @@ model.save_weights('my_model_weights_2d_%d_gp_2.h5'%m, overwrite=True)
 open('my_model_architecture%d_gp_2.json'%m, 'w').write(json_string)
 
 
-# In[22]:
+# In[115]:
 
 # we load a test case and the model
 
@@ -301,7 +337,7 @@ p=10
 print(patchsize)
 
 
-# In[23]:
+# In[116]:
 
 # import pyprind
 # import sys
@@ -345,7 +381,7 @@ print(patchsize)
 #     return tips
 
 
-# In[24]:
+# In[243]:
 
 import pyprind
 import sys
@@ -385,11 +421,11 @@ def gettips(N):
                 cube = np.expand_dims(cube,1)
             if conv1d:
                 cube = cube.reshape(cube.shape[0], cube.shape[1]*cube.shape[2],cube.shape[3])
-            res.append(model.predict_proba(cube, batch_size=ze-p2-z0, verbose=False))
+            res.append(model.predict(cube, batch_size=ze-p2-z0, verbose=False))
         bar.update()
     return res
 
-def findtips(res, prob):
+def findtips(res, prob=1, classVal=1):
     N=1
     p0, p1, p2 = patchsize
     xmiddle = s[0]//2
@@ -409,29 +445,36 @@ def findtips(res, prob):
     for xi in range(x0, xe-p0):
         for yi in range(y0, ye-p1):
             i+=1
-            indices = np.where(res[i][:,0]>=prob)
+            indices = np.where(res[i][:,classVal]>prob)
             # we add the coordinates of the center voxel of the patches that tested positive
             for z in indices[0]:
                 tips.append([xi+p0/2,yi+p1/2,z0+p2/2+z])
     return tips
 
 
-# In[31]:
+# In[244]:
 
 # find the tips for patches with size p
 pred=gettips(1)
 
 
-# In[54]:
+# In[ ]:
+
+
+
+
+# In[251]:
+
+# bg=0, tips=1, needle=2
 
 print(len(pred))
-res = findtips(pred, 0.99999)
+res = findtips(pred, prob=0.9999999, classVal=2)
 len(res)
 
 
 # ## Creation of a labelmap from the voxel that tested positive
 
-# In[55]:
+# In[252]:
 
 mask = np.zeros(im.shape)
 for coord in res:
@@ -440,11 +483,12 @@ nrrd.write('mask%d.nrrd'%m, mask)
 nrrd.write('im%d.nrrd'%m, im)
 
 
-# In[56]:
+# In[253]:
 
 get_ipython().magic('matplotlib notebook')
+import matplotlib.pylab as plt
 # %pylab inline
-# We display one axial slice
+# We d5splay one axial slice
 Z = 30
 fig = plt.figure(figsize=(10,10))
 ax1 = fig.add_subplot(121)
@@ -453,10 +497,10 @@ ax2 = fig.add_subplot(122)
 ax2.imshow(im[:,:,Z].transpose(), cmap='gray', interpolation='nearest')
 
 
-# In[58]:
+# In[254]:
 
 xs,ys,zs = np.where(mask==1)
-fig = plt.figure()
+fig = plt.figure(figsize=(6,6))
 ax = fig.add_subplot(111, projection='3d')
 ax.scatter(xs, ys, zs, marker='o', alpha=0.3, s=10)
 

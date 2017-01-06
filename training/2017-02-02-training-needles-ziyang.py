@@ -49,9 +49,6 @@ from sklearn.cross_validation import StratifiedKFold
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 
-from mpl_toolkits.mplot3d import Axes3D
-
-
 
 # server = tf.train.Server.create_local_server()
 # sess = tf.Session(server.target)
@@ -129,14 +126,14 @@ print('data shape:', X_train.shape)
 # In[3]:
 
 o = 10
-# f_Xtrain = open('X_data_n%d.save'%o, 'wb')
-# f_ytrain = open('y_data_n%d.save'%o, 'wb')
+f_Xtrain = open('X_data_n%d.save'%o, 'wb')
+f_ytrain = open('y_data_n%d.save'%o, 'wb')
 
-# pickle.dump(X_train, f_Xtrain, protocol=pickle.HIGHEST_PROTOCOL)
-# pickle.dump(y_train, f_ytrain, protocol=pickle.HIGHEST_PROTOCOL)
+pickle.dump(X_train, f_Xtrain, protocol=pickle.HIGHEST_PROTOCOL)
+pickle.dump(y_train, f_ytrain, protocol=pickle.HIGHEST_PROTOCOL)
 
-# f_Xtrain.close()
-# f_ytrain.close()
+f_Xtrain.close()
+f_ytrain.close()
 
 
 # In[6]:
@@ -185,10 +182,8 @@ conv1d = False
 dimOrdering = 'tf'
 
 
-# In[30]:
+# In[5]:
 
-oldstdout = sys.stdout
-sys.stdout = sys.__stdout__
 def create_baseline():
 
     nb_classes = 1
@@ -231,10 +226,6 @@ def create_baseline():
         model.add(Convolution2D(10, 10, 10, border_mode='same', activation='relu', name='conv1_1'))
         model.add(Convolution2D(10, 10, 10, border_mode='same', activation='relu', name='conv1_2'))
         model.add(Convolution2D(10, 10, 10, border_mode='same', activation='relu', name='conv1_3'))
-        model.add(Convolution2D(10, 10, 10, border_mode='same', activation='relu'))
-#         model.add(Convolution2D(10, 10, 10, border_mode='same', activation='relu'))
-#         model.add(Convolution2D(10, 10, 10, border_mode='same', activation='relu'))
-#         model.add(Convolution2D(10, 10, 10, border_mode='same', activation='relu'))
         model.add(MaxPooling2D((2,2)))
         model.add(Dropout(0.5))
 
@@ -255,10 +246,10 @@ def create_baseline():
 # np.random.seed(seed)
 estimators = []
 # estimators.append(('standardize', StandardScaler()))
-estimators.append(('mlp', KerasClassifier(build_fn=create_baseline, nb_epoch=30,
+estimators.append(('mlp', KerasClassifier(build_fn=create_baseline, nb_epoch=20,
                                           batch_size=2000, verbose=1)))
 pipeline = Pipeline(estimators)
-kfold = StratifiedKFold(y=y_data, n_folds=3, shuffle=True)#, random_state=seed)
+kfold = StratifiedKFold(y=y_data, n_folds=2, shuffle=True)#, random_state=seed)
 if not conv1d and dimOrdering == 'th':
     X_data = np.swapaxes(X_data_,1,3)
     X_data = np.swapaxes(X_data,2,3)
@@ -278,11 +269,11 @@ results = cross_val_score(pipeline,X_data, y_data, cv=kfold)
 print("Standardized: %.2f%% (%.2f%%)" % (results.mean()*100, results.std()*100))
 
 json_string = model.to_json()
-model.save_weights('my_model_weights_2d_%d_gp_2.h5'%m, overwrite=True)
-open('my_model_architecture%d_gp_2.json'%m, 'w').write(json_string)
+model.save_weights('my_model_weights_2d_%d.h5'%m, overwrite=True)
+open('my_model_architecture%d.json'%m, 'w').write(json_string)
 
 
-# In[22]:
+# In[7]:
 
 # we load a test case and the model
 
@@ -301,7 +292,7 @@ p=10
 print(patchsize)
 
 
-# In[23]:
+# In[8]:
 
 # import pyprind
 # import sys
@@ -345,7 +336,7 @@ print(patchsize)
 #     return tips
 
 
-# In[24]:
+# In[9]:
 
 import pyprind
 import sys
@@ -416,22 +407,22 @@ def findtips(res, prob):
     return tips
 
 
-# In[31]:
+# In[10]:
 
 # find the tips for patches with size p
 pred=gettips(1)
 
 
-# In[54]:
+# In[11]:
 
 print(len(pred))
-res = findtips(pred, 0.99999)
+res = findtips(pred, 1)
 len(res)
 
 
 # ## Creation of a labelmap from the voxel that tested positive
 
-# In[55]:
+# In[12]:
 
 mask = np.zeros(im.shape)
 for coord in res:
@@ -440,10 +431,10 @@ nrrd.write('mask%d.nrrd'%m, mask)
 nrrd.write('im%d.nrrd'%m, im)
 
 
-# In[56]:
+# In[19]:
 
-get_ipython().magic('matplotlib notebook')
-# %pylab inline
+get_ipython().magic('matplotlib inline')
+get_ipython().magic('pylab inline')
 # We display one axial slice
 Z = 30
 fig = plt.figure(figsize=(10,10))
@@ -451,14 +442,6 @@ ax1 = fig.add_subplot(121)
 ax1.imshow((np.clip(mask[:,:,Z]*255+im[:,:,Z]/2,a_min=0,a_max=200)).transpose(),  cmap='gray', interpolation='nearest')
 ax2 = fig.add_subplot(122)
 ax2.imshow(im[:,:,Z].transpose(), cmap='gray', interpolation='nearest')
-
-
-# In[58]:
-
-xs,ys,zs = np.where(mask==1)
-fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
-ax.scatter(xs, ys, zs, marker='o', alpha=0.3, s=10)
 
 
 # In[ ]:
