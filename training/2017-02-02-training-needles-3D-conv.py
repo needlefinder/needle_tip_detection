@@ -1,7 +1,7 @@
 
 # coding: utf-8
 
-# In[220]:
+# In[5]:
 
 
 
@@ -84,7 +84,7 @@ def getTrainingPaths(tipsPath, cases=[64,77]):
     paths = [m.group(0) for l in fnames for m in [regex.search(l)] if m]
     return paths
 
-def loadAllDataFromPath(path, casesToExclude):
+def loadAllDataFromPath(path, casesToExclude, tips=1):
     # path in directorty
     
 #     cubeTipsPath = glob.glob(path + "/*/*.nrrd")
@@ -97,10 +97,15 @@ def loadAllDataFromPath(path, casesToExclude):
     for path_i in cubeTipsPath:
         cubeTips.append(nrrd.read(path_i))
     for i in range(N):
-        # c = np.array(cubeTips[i][0])  # for patches of size 20,20,20
-        c = np.array(cubeTips[i][0][:,:,:]) # for patches of size 10,10,10
+        c = np.array(cubeTips[i][0][:,:,:])
+        d = c[::-1,:,:]
+        e = c[:,::-1,:]
+        f = c[::-1,::-1,:]
         if c.shape==tuple(patchsize):
             data.append(np.array(c))
+            data.append(np.array(d))
+            data.append(np.array(e))
+            data.append(np.array(f))
     output = np.array(data, dtype='float32')
     print('number of sample %d' %len(output))
     return output
@@ -111,12 +116,12 @@ print(tipsPath)
 # notips = loadAllDataFromPath(notipsPath, casesToExclude)[:3*len(tips)]
 
 
-# In[227]:
+# In[76]:
 
 o = 12
-tips = loadAllDataFromPath(tipsPath, casesToExclude)
-notips = loadAllDataFromPath(notipsPath, casesToExclude)[:5*len(tips)]
-needles = loadAllDataFromPath(needlesPath, casesToExclude)[:4*len(tips)]
+tips = loadAllDataFromPath(tipsPath, casesToExclude, tips=1)
+needles = loadAllDataFromPath(needlesPath, casesToExclude, tips=1)[:]
+notips = loadAllDataFromPath(notipsPath, casesToExclude)[:2*len(needles)]
 
 nb_classes = 3
 
@@ -144,7 +149,7 @@ f_Xtrain.close()
 f_ytrain.close()
 
 
-# In[222]:
+# In[72]:
 
 o = 12
 
@@ -165,7 +170,7 @@ X_data_ /= np.std(X_data_)
 # X_data /= 255
 
 y_data= pickle.load(f_ydata)
-y_data_binary = to_categorical(y_data)
+# y_data_binary = to_categorical(y_data)
 
 # encode class values as integers
 # encoder = LabelEncoder()
@@ -181,7 +186,7 @@ print(X_data_.shape, y_data.shape)
 
 
 
-# In[223]:
+# In[73]:
 
 # In[7]:
 
@@ -199,7 +204,7 @@ conv1d = False
 dimOrdering = 'tf'
 
 
-# In[255]:
+# In[81]:
 
 import sys
 oldstdout = sys.stdout
@@ -263,10 +268,10 @@ def create_baseline():
     if m ==14:
         model = Sequential()
         model.add(Convolution3D(10, 10, 10, 10, border_mode='same', input_shape=(1,10,10,10), activation='relu', name='conv1_0'))
-        model.add(Convolution3D(5, 10, 10, 10, border_mode='same', activation='relu', name='conv1_1'))
-        model.add(Convolution3D(5, 10, 10, 10, border_mode='same', activation='relu', name='conv1_2'))
-        model.add(Convolution3D(5, 10, 10,10, border_mode='same', activation='relu', name='conv1_3'))
-#         model.add(Convolution3D(10, 10, 10, border_mode='same', activation='relu'))
+        model.add(Convolution3D(10, 10, 10, 10, border_mode='same', activation='relu', name='conv1_1'))
+        model.add(Convolution3D(10, 10, 10, 10, border_mode='same', activation='relu', name='conv1_2'))
+        model.add(Convolution3D(10, 10, 10, 10, border_mode='same', activation='relu', name='conv1_3'))
+#         model.add(Convolution3D(10, 10, 10, 10, border_mode='same', activation='relu'))
 #         model.add(Convolution3D(10, 10, 10, border_mode='same', activation='relu'))
 #         model.add(Convolution2D(10, 10, 10, border_mode='same', activation='relu'))
 #         model.add(Convolution2D(10, 10, 10, border_mode='same', activation='relu'))
@@ -274,9 +279,41 @@ def create_baseline():
         model.add(Dropout(0.5))
 
         model.add(Flatten())
-        model.add(Dense(5000, activation='relu', name='dense_1'))
+        model.add(Dense(2500, activation='relu', name='dense_1'))
         model.add(Dropout(0.5))
-        model.add(Dense(100, activation='relu', name='dense_2'))
+        model.add(Dense(1000, activation='relu', name='dense_11'))
+        model.add(Dropout(0.5))
+        model.add(Dense(200, activation='relu', name='dense_2'))
+        model.add(Dropout(0.5))
+        model.add(Dense(100, activation='relu', name='dense_3'))
+        model.add(Dropout(0.5))
+        model.add(Dense(30, activation='relu', name='dense_4'))
+        model.add(Dropout(0.5))
+        model.add(Dense(nb_classes, activation='softmax', name='softmax'))
+        
+    if m ==15:
+        model = Sequential()
+        model.add(Convolution3D(64, 3, 3, 3, border_mode='same', input_shape=(1,10,10,10), activation='relu', name='conv1_0'))
+        model.add(Convolution3D(64, 3, 3, 3, border_mode='same', activation='relu', name='conv1_1'))
+#         model.add(Convolution3D(10, 3, 3, 3, border_mode='same', activation='relu', name='conv1_2'))
+#         model.add(Convolution3D(10, 3, 3, 3, border_mode='same', activation='relu', name='conv1_3'))
+#         model.add(Convolution3D(10, 10, 10, 10, border_mode='same', activation='relu'))
+#         model.add(Convolution3D(10, 10, 10, border_mode='same', activation='relu'))
+#         model.add(Convolution2D(10, 10, 10, border_mode='same', activation='relu'))
+#         model.add(Convolution2D(10, 10, 10, border_mode='same', activation='relu'))
+        model.add(MaxPooling3D((2,2,2), border_mode='same'))
+        model.add(Dropout(0.5))
+
+        model.add(Flatten())
+        model.add(Dense(1500, activation='relu', name='dense_1'))
+        model.add(Dropout(0.5))
+        model.add(Dense(1000, activation='relu', name='dense_11'))
+        model.add(Dropout(0.5))
+        model.add(Dense(200, activation='relu', name='dense_2'))
+        model.add(Dropout(0.5))
+        model.add(Dense(100, activation='relu', name='dense_3'))
+        model.add(Dropout(0.5))
+        model.add(Dense(30, activation='relu', name='dense_4'))
         model.add(Dropout(0.5))
         model.add(Dense(nb_classes, activation='softmax', name='softmax'))
         
@@ -290,7 +327,7 @@ def create_baseline():
 # np.random.seed(seed)
 estimators = []
 # estimators.append(('standardize', StandardScaler()))
-estimators.append(('mlp', KerasClassifier(build_fn=create_baseline, nb_epoch=50,
+estimators.append(('mlp', KerasClassifier(build_fn=create_baseline, nb_epoch=30,
                                           batch_size=1000, verbose=1)))
 pipeline = Pipeline(estimators)
 kfold = StratifiedKFold(y=y_train_1dim, n_folds=3, shuffle=True)#, random_state=seed)
@@ -318,7 +355,7 @@ model.save_weights('my_model_weights_2d_%d_gp_2.h5'%m, overwrite=True)
 open('my_model_architecture%d_gp_2.json'%m, 'w').write(json_string)
 
 
-# In[115]:
+# In[82]:
 
 # we load a test case and the model
 
@@ -337,7 +374,7 @@ p=10
 print(patchsize)
 
 
-# In[116]:
+# In[83]:
 
 # import pyprind
 # import sys
@@ -381,7 +418,7 @@ print(patchsize)
 #     return tips
 
 
-# In[243]:
+# In[84]:
 
 import pyprind
 import sys
@@ -452,7 +489,7 @@ def findtips(res, prob=1, classVal=1):
     return tips
 
 
-# In[244]:
+# In[85]:
 
 # find the tips for patches with size p
 pred=gettips(1)
@@ -463,18 +500,18 @@ pred=gettips(1)
 
 
 
-# In[251]:
+# In[99]:
 
 # bg=0, tips=1, needle=2
 
 print(len(pred))
-res = findtips(pred, prob=0.9999999, classVal=2)
+res = findtips(pred, prob=0.02, classVal=1)
 len(res)
 
 
 # ## Creation of a labelmap from the voxel that tested positive
 
-# In[252]:
+# In[100]:
 
 mask = np.zeros(im.shape)
 for coord in res:
@@ -483,13 +520,13 @@ nrrd.write('mask%d.nrrd'%m, mask)
 nrrd.write('im%d.nrrd'%m, im)
 
 
-# In[253]:
+# In[101]:
 
 get_ipython().magic('matplotlib notebook')
 import matplotlib.pylab as plt
 # %pylab inline
 # We d5splay one axial slice
-Z = 30
+Z = 74
 fig = plt.figure(figsize=(10,10))
 ax1 = fig.add_subplot(121)
 ax1.imshow((np.clip(mask[:,:,Z]*255+im[:,:,Z]/2,a_min=0,a_max=200)).transpose(),  cmap='gray', interpolation='nearest')
@@ -497,7 +534,7 @@ ax2 = fig.add_subplot(122)
 ax2.imshow(im[:,:,Z].transpose(), cmap='gray', interpolation='nearest')
 
 
-# In[254]:
+# In[94]:
 
 xs,ys,zs = np.where(mask==1)
 fig = plt.figure(figsize=(6,6))

@@ -126,17 +126,17 @@ X_train = np.array(list(notips)+list(tips))
 print('data shape:', X_train.shape)
 
 
-# In[3]:
+# In[6]:
 
 o = 10
-# f_Xtrain = open('X_data_n%d.save'%o, 'wb')
-# f_ytrain = open('y_data_n%d.save'%o, 'wb')
+f_Xtrain = open('X_data_n%d.save'%o, 'wb')
+f_ytrain = open('y_data_n%d.save'%o, 'wb')
 
-# pickle.dump(X_train, f_Xtrain, protocol=pickle.HIGHEST_PROTOCOL)
-# pickle.dump(y_train, f_ytrain, protocol=pickle.HIGHEST_PROTOCOL)
+pickle.dump(X_train, f_Xtrain, protocol=pickle.HIGHEST_PROTOCOL)
+pickle.dump(y_train, f_ytrain, protocol=pickle.HIGHEST_PROTOCOL)
 
-# f_Xtrain.close()
-# f_ytrain.close()
+f_Xtrain.close()
+f_ytrain.close()
 
 
 # In[6]:
@@ -167,7 +167,7 @@ print("Data shape and label shape")
 print(X_data_.shape, y_data.shape)
 
 
-# In[4]:
+# In[7]:
 
 # In[7]:
 
@@ -185,8 +185,9 @@ conv1d = False
 dimOrdering = 'tf'
 
 
-# In[30]:
+# In[8]:
 
+import sys
 oldstdout = sys.stdout
 sys.stdout = sys.__stdout__
 def create_baseline():
@@ -282,7 +283,7 @@ model.save_weights('my_model_weights_2d_%d_gp_2.h5'%m, overwrite=True)
 open('my_model_architecture%d_gp_2.json'%m, 'w').write(json_string)
 
 
-# In[22]:
+# In[9]:
 
 # we load a test case and the model
 
@@ -301,7 +302,7 @@ p=10
 print(patchsize)
 
 
-# In[23]:
+# In[10]:
 
 # import pyprind
 # import sys
@@ -345,7 +346,7 @@ print(patchsize)
 #     return tips
 
 
-# In[24]:
+# In[11]:
 
 import pyprind
 import sys
@@ -416,13 +417,13 @@ def findtips(res, prob):
     return tips
 
 
-# In[31]:
+# In[12]:
 
 # find the tips for patches with size p
 pred=gettips(1)
 
 
-# In[54]:
+# In[13]:
 
 print(len(pred))
 res = findtips(pred, 0.99999)
@@ -431,7 +432,7 @@ len(res)
 
 # ## Creation of a labelmap from the voxel that tested positive
 
-# In[55]:
+# In[14]:
 
 mask = np.zeros(im.shape)
 for coord in res:
@@ -440,9 +441,11 @@ nrrd.write('mask%d.nrrd'%m, mask)
 nrrd.write('im%d.nrrd'%m, im)
 
 
-# In[56]:
+# In[16]:
 
+import matplotlib.pylab as plt
 get_ipython().magic('matplotlib notebook')
+
 # %pylab inline
 # We display one axial slice
 Z = 30
@@ -453,7 +456,7 @@ ax2 = fig.add_subplot(122)
 ax2.imshow(im[:,:,Z].transpose(), cmap='gray', interpolation='nearest')
 
 
-# In[58]:
+# In[17]:
 
 xs,ys,zs = np.where(mask==1)
 fig = plt.figure()
